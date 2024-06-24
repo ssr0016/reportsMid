@@ -28,28 +28,35 @@ func (r *ReportServiceImpl) Create(ctx context.Context, request *request.ReportC
 	now := time.Now().In(loc)
 
 	report := model.Report{
-		MonthOf:               request.MonthOf,
-		WorkerName:            request.WorkerName,
-		AreaOfAssignment:      request.AreaOfAssignment,
-		NameOfChurch:          request.NameOfChurch,
-		WorshipService:        request.WorshipService,
-		SundaySchool:          request.SundaySchool,
-		PrayerMeetings:        request.PrayerMeetings,
-		BibleStudies:          request.BibleStudies,
-		MensFellowships:       request.MensFellowships,
-		WomensFellowships:     request.WomensFellowships,
-		YouthFellowships:      request.YouthFellowships,
-		ChildFellowships:      request.ChildFellowships,
-		Outreach:              request.Outreach,
-		TrainingOrSeminars:    request.TrainingOrSeminars,
-		LeadershipConferences: request.LeadershipConferences,
-		LeadershipTraining:    request.LeadershipTraining,
-		Others:                request.Others,
-		FamilyDays:            request.FamilyDays,
-		TithesAndOfferings:    request.TithesAndOfferings,
-		AverageAttendance:     request.AverageAttendance,
-		CreatedAt:             now,
-		UpdatedAt:             now,
+		MonthOf:                 request.MonthOf,
+		WorkerName:              request.WorkerName,
+		AreaOfAssignment:        request.AreaOfAssignment,
+		NameOfChurch:            request.NameOfChurch,
+		WorshipService:          request.WorshipService,
+		SundaySchool:            request.SundaySchool,
+		PrayerMeetings:          request.PrayerMeetings,
+		BibleStudies:            request.BibleStudies,
+		MensFellowships:         request.MensFellowships,
+		WomensFellowships:       request.WomensFellowships,
+		YouthFellowships:        request.YouthFellowships,
+		ChildFellowships:        request.ChildFellowships,
+		Outreach:                request.Outreach,
+		TrainingOrSeminars:      request.TrainingOrSeminars,
+		LeadershipConferences:   request.LeadershipConferences,
+		LeadershipTraining:      request.LeadershipTraining,
+		Others:                  request.Others,
+		FamilyDays:              request.FamilyDays,
+		TithesAndOfferings:      request.TithesAndOfferings,
+		AverageAttendance:       request.AverageAttendance,
+		HomeVisited:             request.HomeVisited,
+		BibleStudyOrGroupLed:    request.BibleStudyOrGroupLed,
+		SermonOrMessagePreached: request.SermonOrMessagePreached,
+		PersonNewlyContacted:    request.PersonNewlyContacted,
+		PersonFollowedUp:        request.PersonFollowedUp,
+		PersonLedToChrist:       request.PersonLedToChrist,
+		Names:                   request.Names,
+		CreatedAt:               now,
+		UpdatedAt:               now,
 	}
 
 	// Save the report using the repository
@@ -87,28 +94,35 @@ func (r *ReportServiceImpl) FindAll(ctx context.Context) ([]response.ReportRespo
 
 	for _, value := range reports {
 		report := response.ReportResponse{
-			Id:                    value.Id,
-			MonthOf:               value.MonthOf,
-			WorkerName:            value.WorkerName,
-			AreaOfAssignment:      value.AreaOfAssignment,
-			NameOfChurch:          value.NameOfChurch,
-			WorshipService:        value.WorshipService,
-			SundaySchool:          value.SundaySchool,
-			PrayerMeetings:        value.PrayerMeetings,
-			BibleStudies:          value.BibleStudies,
-			MensFellowships:       value.MensFellowships,
-			WomensFellowships:     value.WomensFellowships,
-			YouthFellowships:      value.YouthFellowships,
-			ChildFellowships:      value.ChildFellowships,
-			Outreach:              value.Outreach,
-			TrainingOrSeminars:    value.TrainingOrSeminars,
-			LeadershipConferences: value.LeadershipConferences,
-			LeadershipTraining:    value.LeadershipTraining,
-			Others:                value.Others,
-			FamilyDays:            value.FamilyDays,
-			TithesAndOfferings:    value.TithesAndOfferings,
-			CreatedAt:             value.CreatedAt,
-			UpdatedAt:             value.UpdatedAt,
+			Id:                      value.Id,
+			MonthOf:                 value.MonthOf,
+			WorkerName:              value.WorkerName,
+			AreaOfAssignment:        value.AreaOfAssignment,
+			NameOfChurch:            value.NameOfChurch,
+			WorshipService:          value.WorshipService,
+			SundaySchool:            value.SundaySchool,
+			PrayerMeetings:          value.PrayerMeetings,
+			BibleStudies:            value.BibleStudies,
+			MensFellowships:         value.MensFellowships,
+			WomensFellowships:       value.WomensFellowships,
+			YouthFellowships:        value.YouthFellowships,
+			ChildFellowships:        value.ChildFellowships,
+			Outreach:                value.Outreach,
+			TrainingOrSeminars:      value.TrainingOrSeminars,
+			LeadershipConferences:   value.LeadershipConferences,
+			LeadershipTraining:      value.LeadershipTraining,
+			Others:                  value.Others,
+			FamilyDays:              value.FamilyDays,
+			TithesAndOfferings:      value.TithesAndOfferings,
+			HomeVisited:             value.HomeVisited,
+			BibleStudyOrGroupLed:    value.BibleStudyOrGroupLed,
+			SermonOrMessagePreached: value.SermonOrMessagePreached,
+			PersonNewlyContacted:    value.PersonNewlyContacted,
+			PersonFollowedUp:        value.PersonFollowedUp,
+			PersonLedToChrist:       value.PersonLedToChrist,
+			Names:                   value.Names,
+			CreatedAt:               value.CreatedAt,
+			UpdatedAt:               value.UpdatedAt,
 		}
 
 		// Calculate average attendance for each type
@@ -127,6 +141,12 @@ func (r *ReportServiceImpl) FindAll(ctx context.Context) ([]response.ReportRespo
 		report.OthersAvg = model.CalculateAverage(value.Others)
 		report.FamilyDaysAvg = model.CalculateAverage(value.FamilyDays)
 		report.TithesAndOfferingsAvg = model.CalculateAverage(value.TithesAndOfferings)
+		report.HomeVisitedAvg = model.CalculateAverage(value.HomeVisited)
+		report.BibleStudyOrGroupLedAvg = model.CalculateAverage(value.BibleStudyOrGroupLed)
+		report.SermonOrMessagePreachedAvg = model.CalculateAverage(value.SermonOrMessagePreached)
+		report.PersonNewlyContactedAvg = model.CalculateAverage(value.PersonNewlyContacted)
+		report.PersonFollowedUpAvg = model.CalculateAverage(value.PersonFollowedUp)
+		report.PersonLedToChristAvg = model.CalculateAverage(value.PersonLedToChrist)
 
 		reportResp = append(reportResp, report)
 	}

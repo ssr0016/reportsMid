@@ -48,32 +48,39 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
 	defer helper.CommitOrRollback(tx)
 
 	rawSQL := `
-		SELECT 
-			id,
-			month_of,
-			worker_name,
-			area_of_assignment,
-			name_of_church,
-			created_at,
-			updated_at,
-			worship_service,
-			sunday_school,
-			prayer_meetings,
-			bible_studies,
-			mens_fellowships,
-			womens_fellowships,
-			youth_fellowships,
-			child_fellowships,
-			outreach,
-			training_or_seminars,
-			leadership_conferences,
-			leadership_training,
-			others,
-			family_days,
-			tithes_and_offerings,
-			average_attendance
-		FROM reports
-	`
+        SELECT 
+            id,
+            month_of,
+            worker_name,
+            area_of_assignment,
+            name_of_church,
+            created_at,
+            updated_at,
+            worship_service,
+            sunday_school,
+            prayer_meetings,
+            bible_studies,
+            mens_fellowships,
+            womens_fellowships,
+            youth_fellowships,
+            child_fellowships,
+            outreach,
+            training_or_seminars,
+            leadership_conferences,
+            leadership_training,
+            others,
+            family_days,
+            tithes_and_offerings,
+            average_attendance,
+            home_visited,
+            bible_study_or_group_led,
+            sermon_or_message_preached,
+            person_newly_contacted,
+            person_followed_up,
+            person_led_to_christ,
+            names
+        FROM reports
+    `
 	result, err := tx.QueryContext(ctx, rawSQL)
 	if err != nil {
 		return nil, err
@@ -100,6 +107,13 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
 			othersJSON                []byte
 			familyDaysJSON            []byte
 			tithesAndOfferingsJSON    []byte
+			homeVisitedJSON           []byte
+			bibleStudyOrGroupLedJSON  []byte
+			sermonOrMessageJSON       []byte
+			personNewlyContactedJSON  []byte
+			personFollowedUpJSON      []byte
+			personLedToChristJSON     []byte
+			namesJSON                 []byte
 		)
 
 		// Scan the row into variables
@@ -127,6 +141,13 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
 			&familyDaysJSON,
 			&tithesAndOfferingsJSON,
 			&report.AverageAttendance,
+			&homeVisitedJSON,
+			&bibleStudyOrGroupLedJSON,
+			&sermonOrMessageJSON,
+			&personNewlyContactedJSON,
+			&personFollowedUpJSON,
+			&personLedToChristJSON,
+			&namesJSON,
 		)
 		if err != nil {
 			return nil, err
@@ -219,6 +240,49 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
 
 		if tithesAndOfferingsJSON != nil {
 			if err := json.Unmarshal(tithesAndOfferingsJSON, &report.TithesAndOfferings); err != nil {
+				return nil, err
+			}
+		}
+
+		// Unmarshal JSONB fields into []int for additional fields
+		if homeVisitedJSON != nil {
+			if err := json.Unmarshal(homeVisitedJSON, &report.HomeVisited); err != nil {
+				return nil, err
+			}
+		}
+
+		if bibleStudyOrGroupLedJSON != nil {
+			if err := json.Unmarshal(bibleStudyOrGroupLedJSON, &report.BibleStudyOrGroupLed); err != nil {
+				return nil, err
+			}
+		}
+
+		if sermonOrMessageJSON != nil {
+			if err := json.Unmarshal(sermonOrMessageJSON, &report.SermonOrMessagePreached); err != nil {
+				return nil, err
+			}
+		}
+
+		if personNewlyContactedJSON != nil {
+			if err := json.Unmarshal(personNewlyContactedJSON, &report.PersonNewlyContacted); err != nil {
+				return nil, err
+			}
+		}
+
+		if personFollowedUpJSON != nil {
+			if err := json.Unmarshal(personFollowedUpJSON, &report.PersonFollowedUp); err != nil {
+				return nil, err
+			}
+		}
+
+		if personLedToChristJSON != nil {
+			if err := json.Unmarshal(personLedToChristJSON, &report.PersonLedToChrist); err != nil {
+				return nil, err
+			}
+		}
+
+		if namesJSON != nil {
+			if err := json.Unmarshal(namesJSON, &report.Names); err != nil {
 				return nil, err
 			}
 		}
@@ -381,6 +445,41 @@ func (r *ReportRepositoryImpl) Save(ctx context.Context, report *model.Report) e
 		return err
 	}
 
+	homeVisitedJSON, err := json.Marshal(report.HomeVisited)
+	if err != nil {
+		return err
+	}
+
+	bibleStudyOrGroupLedJSON, err := json.Marshal(report.BibleStudyOrGroupLed)
+	if err != nil {
+		return err
+	}
+
+	sermonOrMessagePreachedJSON, err := json.Marshal(report.SermonOrMessagePreached)
+	if err != nil {
+		return err
+	}
+
+	personNewlyContactedJSON, err := json.Marshal(report.PersonNewlyContacted)
+	if err != nil {
+		return err
+	}
+
+	personFollowedUpJSON, err := json.Marshal(report.PersonFollowedUp)
+	if err != nil {
+		return err
+	}
+
+	personLedToChristJSON, err := json.Marshal(report.PersonLedToChrist)
+	if err != nil {
+		return err
+	}
+
+	namesJSON, err := json.Marshal(report.Names)
+	if err != nil {
+		return err
+	}
+
 	rawSQL := `
 		INSERT INTO reports (
 			month_of,
@@ -403,9 +502,16 @@ func (r *ReportRepositoryImpl) Save(ctx context.Context, report *model.Report) e
 			family_days,
 			tithes_and_offerings,
 			average_attendance,
+			home_visited,
+			bible_study_or_group_led,
+			sermon_or_message_preached,
+			person_newly_contacted,
+			person_followed_up,
+			person_led_to_christ,
+			names,
 			created_at,
 			updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
 	`
 
 	_, err = tx.ExecContext(ctx, rawSQL,
@@ -429,6 +535,13 @@ func (r *ReportRepositoryImpl) Save(ctx context.Context, report *model.Report) e
 		familyDaysJSON,
 		tithesAndOfferingsJSON,
 		report.AverageAttendance,
+		homeVisitedJSON,
+		bibleStudyOrGroupLedJSON,
+		sermonOrMessagePreachedJSON,
+		personNewlyContactedJSON,
+		personFollowedUpJSON,
+		personLedToChristJSON,
+		namesJSON,
 		report.CreatedAt,
 		report.UpdatedAt,
 	)
