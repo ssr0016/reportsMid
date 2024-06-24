@@ -45,7 +45,7 @@ func (controller *ReportController) FindById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": report})
+	ctx.JSON(http.StatusOK, gin.H{"report": report})
 }
 
 func (controller *ReportController) FindAll(ctx *gin.Context) {
@@ -55,7 +55,7 @@ func (controller *ReportController) FindAll(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": reports})
+	ctx.JSON(http.StatusOK, gin.H{"reports": reports})
 }
 
 func (controller *ReportController) Delete(ctx *gin.Context) {

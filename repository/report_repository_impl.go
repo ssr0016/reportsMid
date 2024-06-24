@@ -78,7 +78,10 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
             person_newly_contacted,
             person_followed_up,
             person_led_to_christ,
-            names
+            names,
+			narrative_report,
+			challenges_and_problem_encountered,
+			prayer_request
         FROM reports
     `
 	result, err := tx.QueryContext(ctx, rawSQL)
@@ -148,6 +151,9 @@ func (r *ReportRepositoryImpl) FindAll(ctx context.Context) ([]model.Report, err
 			&personFollowedUpJSON,
 			&personLedToChristJSON,
 			&namesJSON,
+			&report.NarrativeReport,
+			&report.ChallengesAndProblemEncountered,
+			&report.PrayerRequest,
 		)
 		if err != nil {
 			return nil, err
@@ -317,48 +323,196 @@ func (r *ReportRepositoryImpl) FindById(ctx context.Context, reportId int) (*mod
 			created_at,
 			updated_at,
 			worship_service,
-			average_attendance
+			sunday_school,
+			prayer_meetings,
+			bible_studies,
+			mens_fellowships,
+			womens_fellowships,
+			youth_fellowships,
+			child_fellowships,
+			outreach,
+			training_or_seminars,
+			leadership_conferences,
+			leadership_training,
+			others,
+			family_days,
+			tithes_and_offerings,
+			average_attendance,
+			home_visited,
+			bible_study_or_group_led,
+			sermon_or_message_preached,
+			person_newly_contacted,
+			person_followed_up,
+			person_led_to_christ,
+			names,
+			narrative_report,
+			challenges_and_problem_encountered,
+			prayer_request
 		FROM reports
 		WHERE 
 			id = $1
 	`
-	result, errQuery := tx.QueryContext(ctx, rawSQL, reportId)
-	helper.ErrorPanic(errQuery)
-	defer result.Close()
 
-	report := model.Report{}
-	var worshipServiceJSON []byte
+	// Query the database
+	row := tx.QueryRowContext(ctx, rawSQL, reportId)
 
-	if result.Next() {
-		err := result.Scan(
-			&report.Id,
-			&report.MonthOf,
-			&report.WorkerName,
-			&report.AreaOfAssignment,
-			&report.NameOfChurch,
-			&report.CreatedAt,
-			&report.UpdatedAt,
-			&worshipServiceJSON,
-			&report.AverageAttendance,
-		)
+	// Initialize a new Report struct to hold the retrieved data
+	report := &model.Report{}
 
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, errors.New("report not found")
-			}
+	// Variables to hold JSONB data
+	var (
+		worshipServiceJSON              []byte
+		sundaySchoolJSON                []byte
+		prayerMeetingsJSON              []byte
+		bibleStudiesJSON                []byte
+		mensFellowshipsJSON             []byte
+		womensFellowshipsJSON           []byte
+		youthFellowshipsJSON            []byte
+		childFellowshipsJSON            []byte
+		outreachJSON                    []byte
+		trainingOrSeminarsJSON          []byte
+		leadershipConferencesJSON       []byte
+		leadershipTrainingJSON          []byte
+		othersJSON                      []byte
+		familyDaysJSON                  []byte
+		tithesAndOfferingsJSON          []byte
+		homeVisitedJSON                 []byte
+		bibleStudyOrGroupLedJSON        []byte
+		sermonOrMessagePreachedJSON     []byte
+		personNewlyContactedJSON        []byte
+		personFollowedUpJSON            []byte
+		personLedToChristJSON           []byte
+		namesJSON                       []byte
+		narrativeReportString           sql.NullString
+		challengesAndProblemEncountered sql.NullString
+		prayerRequestString             sql.NullString
+	)
 
-			return nil, err
+	// Scan the row into variables
+	err = row.Scan(
+		&report.Id,
+		&report.MonthOf,
+		&report.WorkerName,
+		&report.AreaOfAssignment,
+		&report.NameOfChurch,
+		&report.CreatedAt,
+		&report.UpdatedAt,
+		&worshipServiceJSON,
+		&sundaySchoolJSON,
+		&prayerMeetingsJSON,
+		&bibleStudiesJSON,
+		&mensFellowshipsJSON,
+		&womensFellowshipsJSON,
+		&youthFellowshipsJSON,
+		&childFellowshipsJSON,
+		&outreachJSON,
+		&trainingOrSeminarsJSON,
+		&leadershipConferencesJSON,
+		&leadershipTrainingJSON,
+		&othersJSON,
+		&familyDaysJSON,
+		&tithesAndOfferingsJSON,
+		&report.AverageAttendance,
+		&homeVisitedJSON,
+		&bibleStudyOrGroupLedJSON,
+		&sermonOrMessagePreachedJSON,
+		&personNewlyContactedJSON,
+		&personFollowedUpJSON,
+		&personLedToChristJSON,
+		&namesJSON,
+		&narrativeReportString,
+		&challengesAndProblemEncountered,
+		&prayerRequestString,
+	)
+
+	// Handle potential errors from scanning
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("report not found")
 		}
-
-		// Unmarshal worshipServiceJSON into []int
-		err = json.Unmarshal(worshipServiceJSON, &report.WorshipService)
-		if err != nil {
-			return nil, err
-		}
-
+		return nil, err
 	}
 
-	return &report, nil
+	// Unmarshal JSONB data into respective fields
+	if err := json.Unmarshal(worshipServiceJSON, &report.WorshipService); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(sundaySchoolJSON, &report.SundaySchool); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(prayerMeetingsJSON, &report.PrayerMeetings); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bibleStudiesJSON, &report.BibleStudies); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(mensFellowshipsJSON, &report.MensFellowships); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(womensFellowshipsJSON, &report.WomensFellowships); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(youthFellowshipsJSON, &report.YouthFellowships); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(childFellowshipsJSON, &report.ChildFellowships); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(outreachJSON, &report.Outreach); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(trainingOrSeminarsJSON, &report.TrainingOrSeminars); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(leadershipConferencesJSON, &report.LeadershipConferences); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(leadershipTrainingJSON, &report.LeadershipTraining); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(othersJSON, &report.Others); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(familyDaysJSON, &report.FamilyDays); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(tithesAndOfferingsJSON, &report.TithesAndOfferings); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(homeVisitedJSON, &report.HomeVisited); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bibleStudyOrGroupLedJSON, &report.BibleStudyOrGroupLed); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(sermonOrMessagePreachedJSON, &report.SermonOrMessagePreached); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(personNewlyContactedJSON, &report.PersonNewlyContacted); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(personFollowedUpJSON, &report.PersonFollowedUp); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(personLedToChristJSON, &report.PersonLedToChrist); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(namesJSON, &report.Names); err != nil {
+		return nil, err
+	}
+
+	// Handle nullable strings
+	if narrativeReportString.Valid {
+		report.NarrativeReport = narrativeReportString.String
+	}
+	if challengesAndProblemEncountered.Valid {
+		report.ChallengesAndProblemEncountered = challengesAndProblemEncountered.String
+	}
+	if prayerRequestString.Valid {
+		report.PrayerRequest = prayerRequestString.String
+	}
+
+	return report, nil
 }
 
 // Save implements BookRepository
@@ -509,9 +663,12 @@ func (r *ReportRepositoryImpl) Save(ctx context.Context, report *model.Report) e
 			person_followed_up,
 			person_led_to_christ,
 			names,
+			narrative_report,
+			challenges_and_problem_encountered,
+			prayer_request,
 			created_at,
 			updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
 	`
 
 	_, err = tx.ExecContext(ctx, rawSQL,
@@ -542,6 +699,9 @@ func (r *ReportRepositoryImpl) Save(ctx context.Context, report *model.Report) e
 		personFollowedUpJSON,
 		personLedToChristJSON,
 		namesJSON,
+		report.NarrativeReport,
+		report.ChallengesAndProblemEncountered,
+		report.PrayerRequest,
 		report.CreatedAt,
 		report.UpdatedAt,
 	)
@@ -574,24 +734,158 @@ func (r *ReportRepositoryImpl) Update(ctx context.Context, report *model.Report)
 			area_of_assignment = $3,
 			name_of_church = $4,
 			worship_service = $5,
-			average_attendance = $6,
-			updated_at = $7
+			sunday_school = $6,
+			prayer_meetings = $7,
+			bible_studies = $8,
+			mens_fellowships = $9,
+			womens_fellowships = $10,
+			youth_fellowships = $11,
+			child_fellowships = $12,
+			outreach = $13,
+			training_or_seminars = $14,
+			leadership_conferences = $15,
+			leadership_training	= $16,
+			others = $17,
+			family_days = $18,
+			tithes_and_offerings = $19,
+			average_attendance = $20,
+			home_visited = $21,
+			bible_study_or_group_led = $22,
+			sermon_or_message_preached = $23,
+			person_newly_contacted = $24,
+			person_followed_up = $25,
+			person_led_to_christ = $26,
+			names = $27,
+			narrative_report = $28,
+			challenges_and_problem_encountered = $29,
+			prayer_request = $30,
+			updated_at = $31
 		WHERE 
-			id = $8
+			id = $32
 	`
 
+	// Marshal arrays to JSON
 	worshipServiceJSON, err := json.Marshal(report.WorshipService)
 	if err != nil {
 		return err
 	}
+	sundaySchoolJSON, err := json.Marshal(report.SundaySchool)
+	if err != nil {
+		return err
+	}
+	prayerMeetingsJSON, err := json.Marshal(report.PrayerMeetings)
+	if err != nil {
+		return err
+	}
+	bibleStudiesJSON, err := json.Marshal(report.BibleStudies)
+	if err != nil {
+		return err
+	}
+	mensFellowshipsJSON, err := json.Marshal(report.MensFellowships)
+	if err != nil {
+		return err
+	}
+	womensFellowshipsJSON, err := json.Marshal(report.WomensFellowships)
+	if err != nil {
+		return err
+	}
+	youthFellowshipsJSON, err := json.Marshal(report.YouthFellowships)
+	if err != nil {
+		return err
+	}
+	childFellowshipsJSON, err := json.Marshal(report.ChildFellowships)
+	if err != nil {
+		return err
+	}
+	outreachJSON, err := json.Marshal(report.Outreach)
+	if err != nil {
+		return err
+	}
+	trainingOrSeminarsJSON, err := json.Marshal(report.TrainingOrSeminars)
+	if err != nil {
+		return err
+	}
+	leadershipConferencesJSON, err := json.Marshal(report.LeadershipConferences)
+	if err != nil {
+		return err
+	}
+	leadershipTrainingJSON, err := json.Marshal(report.LeadershipTraining)
+	if err != nil {
+		return err
+	}
+	othersJSON, err := json.Marshal(report.Others)
+	if err != nil {
+		return err
+	}
+	familyDaysJSON, err := json.Marshal(report.FamilyDays)
+	if err != nil {
+		return err
+	}
+	tithesAndOfferingsJSON, err := json.Marshal(report.TithesAndOfferings)
+	if err != nil {
+		return err
+	}
+	homeVisitedJSON, err := json.Marshal(report.HomeVisited)
+	if err != nil {
+		return err
+	}
+	bibleStudyOrGroupLedJSON, err := json.Marshal(report.BibleStudyOrGroupLed)
+	if err != nil {
+		return err
+	}
+	sermonOrMessagePreachedJSON, err := json.Marshal(report.SermonOrMessagePreached)
+	if err != nil {
+		return err
+	}
+	personNewlyContactedJSON, err := json.Marshal(report.PersonNewlyContacted)
+	if err != nil {
+		return err
+	}
+	personFollowedUpJSON, err := json.Marshal(report.PersonFollowedUp)
+	if err != nil {
+		return err
+	}
+	personLedToChristJSON, err := json.Marshal(report.PersonLedToChrist)
+	if err != nil {
+		return err
+	}
+	namesJSON, err := json.Marshal(report.Names)
+	if err != nil {
+		return err
+	}
 
+	// Execute the update query
 	_, err = tx.ExecContext(ctx, rawSQL,
 		report.MonthOf,
 		report.WorkerName,
 		report.AreaOfAssignment,
 		report.NameOfChurch,
 		worshipServiceJSON,
+		sundaySchoolJSON,
+		prayerMeetingsJSON,
+		bibleStudiesJSON,
+		mensFellowshipsJSON,
+		womensFellowshipsJSON,
+		youthFellowshipsJSON,
+		childFellowshipsJSON,
+		outreachJSON,
+		trainingOrSeminarsJSON,
+		leadershipConferencesJSON,
+		leadershipTrainingJSON,
+		othersJSON,
+		familyDaysJSON,
+		tithesAndOfferingsJSON,
 		report.AverageAttendance,
+		homeVisitedJSON,
+		bibleStudyOrGroupLedJSON,
+		sermonOrMessagePreachedJSON,
+		personNewlyContactedJSON,
+		personFollowedUpJSON,
+		personLedToChristJSON,
+		namesJSON,
+		report.NarrativeReport,
+		report.ChallengesAndProblemEncountered,
+		report.PrayerRequest,
 		now,
 		report.Id,
 	)

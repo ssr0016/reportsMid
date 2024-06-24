@@ -48,6 +48,9 @@ CREATE TABLE reports (
     person_newly_contacted_avg FLOAT8 DEFAULT NULL,
     person_followed_up_avg FLOAT8 DEFAULT NULL,
     person_led_to_christ_avg FLOAT8 DEFAULT NULL,
+    narrative_report TEXT,  
+    challenges_and_problem_encountered TEXT,
+    prayer_request TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
